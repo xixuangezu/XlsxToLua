@@ -625,45 +625,51 @@ namespace XlsxToLuaGUI
             Dictionary<string, string> tableNameAndPath = new Dictionary<string, string>();
             // 记录重名文件所在目录
             Dictionary<string, List<string>> sameExcelNameInfo = new Dictionary<string, List<string>>();
+            SearchOption searchOptionType;
             if (cbExportIncludeSubfolder.Checked == true)
             {
-                foreach (string filePath in Directory.GetFiles(excelFolderPath, "*.xlsx", SearchOption.AllDirectories))
-                {
-                    string fileName = Path.GetFileNameWithoutExtension(filePath);
-                    if (fileName.StartsWith(AppValues.EXCEL_TEMP_FILE_FILE_NAME_START_STRING))
-                        continue;
-
-                    if (tableNameAndPath.ContainsKey(fileName))
-                    {
-                        if (!sameExcelNameInfo.ContainsKey(fileName))
-                        {
-                            sameExcelNameInfo.Add(fileName, new List<string>());
-                            sameExcelNameInfo[fileName].Add(tableNameAndPath[fileName]);
-                        }
-
-                        sameExcelNameInfo[fileName].Add(filePath);
-                    }
-                    else
-                        tableNameAndPath.Add(fileName, filePath);
-                }
-
-                if (sameExcelNameInfo.Count > 0)
-                {
-                    StringBuilder sameExcelNameErrorStringBuilder = new StringBuilder();
-                    sameExcelNameErrorStringBuilder.AppendLine("错误：Excel文件夹及其子文件夹中不允许出现同名文件，重名文件如下：");
-                    foreach (var item in sameExcelNameInfo)
-                    {
-                        string fileName = item.Key;
-                        List<string> filePath = item.Value;
-                        sameExcelNameErrorStringBuilder.AppendFormat("以下路径中存在同名文件（{0}）：\n", fileName);
-                        foreach (string oneFilePath in filePath)
-                            sameExcelNameErrorStringBuilder.AppendLine(oneFilePath);
-                    }
-
-                    MessageBox.Show(sameExcelNameErrorStringBuilder.ToString(), "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
+                searchOptionType = SearchOption.AllDirectories;
+            }else{
+                searchOptionType = SearchOption.TopDirectoryOnly;
             }
+
+            foreach (string filePath in Directory.GetFiles(excelFolderPath, "*.xlsx", searchOptionType))
+            {
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                if (fileName.StartsWith(AppValues.EXCEL_TEMP_FILE_FILE_NAME_START_STRING))
+                    continue;
+
+                if (tableNameAndPath.ContainsKey(fileName))
+                {
+                    if (!sameExcelNameInfo.ContainsKey(fileName))
+                    {
+                        sameExcelNameInfo.Add(fileName, new List<string>());
+                        sameExcelNameInfo[fileName].Add(tableNameAndPath[fileName]);
+                    }
+
+                    sameExcelNameInfo[fileName].Add(filePath);
+                }
+                else
+                    tableNameAndPath.Add(fileName, filePath);
+            }
+
+            if (sameExcelNameInfo.Count > 0)
+            {
+                StringBuilder sameExcelNameErrorStringBuilder = new StringBuilder();
+                sameExcelNameErrorStringBuilder.AppendLine("错误：Excel文件夹及其子文件夹中不允许出现同名文件，重名文件如下：");
+                foreach (var item in sameExcelNameInfo)
+                {
+                    string fileName = item.Key;
+                    List<string> filePath = item.Value;
+                    sameExcelNameErrorStringBuilder.AppendFormat("以下路径中存在同名文件（{0}）：\n", fileName);
+                    foreach (string oneFilePath in filePath)
+                        sameExcelNameErrorStringBuilder.AppendLine(oneFilePath);
+                }
+
+                MessageBox.Show(sameExcelNameErrorStringBuilder.ToString(), "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             // 检查如果设置了-exportKeepDirectoryStructure参数，是否也设置了-exportIncludeSubfolder参数
             if (cbExportKeepDirectoryStructure.Checked == true && cbExportIncludeSubfolder.Checked == false)
             {
