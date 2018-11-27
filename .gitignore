@@ -1,5 +1,7 @@
 XlsxToLua/.vs/
 XlsxToLua/obj/
+XlsxToLuaGUI/.vs/
+XlsxToLuaGUI/obj/
 
 XlsxToLua/bin/Debug/ExportJson/
 XlsxToLua/bin/Debug/ExportLua/
