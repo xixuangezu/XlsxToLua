@@ -245,6 +245,7 @@ public class TableExportToJavaClassHelper
 
                     break;
                 }
+            case DataType.Arr:
             case DataType.TableString:
                 {
                     if (fieldInfo.TableStringFormatDefine.KeyDefine.KeyType == TableStringKeyType.Seq)

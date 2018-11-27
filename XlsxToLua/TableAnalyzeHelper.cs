@@ -409,6 +409,11 @@ public class TableAnalyzeHelper
                     _AnalyzeDictType(fieldInfo, tableInfo, dt, columnIndex, parentField, out nextFieldColumnIndex, out errorString);
                     break;
                 }
+            case DataType.Arr:
+                {
+                    _AnalyzeArrType(fieldInfo, tableInfo, dt, columnIndex, parentField, out nextFieldColumnIndex, out errorString);
+                    break;
+                }
             default:
                 {
                     errorString = string.Format("数据类型无效，填写的为{0}", fieldInfo.DataTypeString);
@@ -459,6 +464,8 @@ public class TableAnalyzeHelper
             return DataType.Array;
         else if (typeString.StartsWith("dict", StringComparison.CurrentCultureIgnoreCase))
             return DataType.Dict;
+        else if(typeString.StartsWith("arr", StringComparison.CurrentCultureIgnoreCase))
+            return DataType.Arr;
         else
             return DataType.Invalid;
     }
@@ -1464,6 +1471,38 @@ public class TableAnalyzeHelper
             return false;
         }
     }
+  
+    private static bool _AnalyzeArrType(FieldInfo fieldInfo, TableInfo tableInfo, DataTable dt, int columnIndex, FieldInfo parentField, out int nextFieldColumnIndex, out string errorString)
+    {
+                // 检查定义字符串是否合法并转为TableStringFormatDefine的定义结构
+        fieldInfo.TableStringFormatDefine = _GetArrFormatDefine(fieldInfo.DataTypeString, out errorString);
+        if (errorString != null)
+        {
+            errorString = string.Format("tableString格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
+            nextFieldColumnIndex = columnIndex + 1;
+            return false;
+        }
+        // 将填写的数据直接以字符串形式存在FieldInfo的Data变量中
+        fieldInfo.Data = new List<object>();
+        for (int row = AppValues.DATA_FIELD_DATA_START_INDEX; row < dt.Rows.Count; ++row)
+        {
+            // 如果本行该字段的父元素标记为无效则该数据也标为无效
+            if (parentField != null && (bool)parentField.Data[row - AppValues.DATA_FIELD_DATA_START_INDEX] == false)
+                fieldInfo.Data.Add(null);
+            else
+            {
+                string inputData = dt.Rows[row][columnIndex].ToString().Trim();
+                if (string.IsNullOrEmpty(inputData))
+                    fieldInfo.Data.Add(null);
+                else
+                    fieldInfo.Data.Add(inputData);
+            }
+        }
+
+        errorString = null;
+        nextFieldColumnIndex = columnIndex + 1;
+        return true;
+    }
 
     private static TableStringFormatDefine _GetTableStringFormatDefine(string dataTypeString, out string errorString)
     {
@@ -1650,6 +1689,46 @@ public class TableAnalyzeHelper
 
         errorString = null;
         return elementDefine;
+    }
+
+    private static TableStringFormatDefine _GetArrFormatDefine(string dataTypeString, out string errorString)
+    {
+        TableStringFormatDefine formatDefine = new TableStringFormatDefine();
+
+        // 必须在tableString[]中声明格式
+        const string DEFINE_START_STRING = "arr[";
+        if (!(dataTypeString.StartsWith(DEFINE_START_STRING, StringComparison.CurrentCultureIgnoreCase) && dataTypeString.EndsWith("]")))
+        {
+            errorString = "arr[]中声明，即以\"arr[\"开头，以\"]\"结尾";
+            return formatDefine;
+        }
+
+        //修改起始
+        //[key]
+        formatDefine.KeyDefine.KeyType = TableStringKeyType.Seq;
+
+        //[var]
+        formatDefine.ValueDefine.ValueType = TableStringValueType.DataInIndex;
+        
+            // 去掉外面的tableString[]，取得中间定义内容
+        int startIndex = DEFINE_START_STRING.Length;
+        string cellTypeString = dataTypeString.Substring(startIndex, dataTypeString.Length - startIndex - 1).Trim();
+
+            // var 类型/数据index 解析
+        DataInIndexDefine dataInIndexDefine = new DataInIndexDefine();
+        dataInIndexDefine.DataIndex = 1;
+
+        dataInIndexDefine.DataType = _AnalyzeDataType(cellTypeString);
+        if (!(dataInIndexDefine.DataType == DataType.Int || dataInIndexDefine.DataType == DataType.Long || dataInIndexDefine.DataType == DataType.Float || dataInIndexDefine.DataType == DataType.Bool || dataInIndexDefine.DataType == DataType.String || dataInIndexDefine.DataType == DataType.Lang))
+        {
+            errorString = "arr 元素格式类型非法，只支持int、long、float、bool、string、lang这几种类型";
+            return formatDefine;
+        }
+
+        formatDefine.ValueDefine.DataInIndexDefine = dataInIndexDefine;
+
+        errorString = null;
+        return formatDefine;
     }
 
     /// <summary>

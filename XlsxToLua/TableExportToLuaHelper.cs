@@ -525,6 +525,7 @@ public class TableExportToLuaHelper
                     value = _GetJsonValue(fieldInfo, row, level);
                     break;
                 }
+            case DataType.Arr:
             case DataType.TableString:
                 {
                     value = _GetTableStringValue(fieldInfo, row, level, out errorString);

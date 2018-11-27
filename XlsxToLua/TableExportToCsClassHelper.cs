@@ -31,7 +31,7 @@ public class TableExportToCsClassHelper
         {
             foreach (FieldInfo fieldInfo in allFieldInfo)
             {
-                if (fieldInfo.DataType == DataType.Array || fieldInfo.DataType == DataType.Dict || fieldInfo.DataType == DataType.Json || fieldInfo.DataType == DataType.TableString)
+                if (fieldInfo.DataType == DataType.Array || fieldInfo.DataType == DataType.Dict || fieldInfo.DataType == DataType.Json || fieldInfo.DataType == DataType.TableString || fieldInfo.DataType == DataType.Arr)
                 {
                     stringBuilder.AppendLine(string.Concat("using ", _SET_DATA_TYPE_USING_STRING, ";"));
                     isAddNamespace = true;
@@ -153,6 +153,7 @@ public class TableExportToCsClassHelper
                     stringBuilder.Append("DateTime");
                     break;
                 }
+            case DataType.Arr:
             case DataType.TableString:
                 {
                     if (fieldInfo.TableStringFormatDefine.KeyDefine.KeyType == TableStringKeyType.Seq)

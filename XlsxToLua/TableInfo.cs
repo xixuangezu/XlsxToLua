@@ -181,6 +181,7 @@ public enum DataType
     Array,
     Dict,
     MapString,
+    Arr,
 }
 
 /// <summary>
