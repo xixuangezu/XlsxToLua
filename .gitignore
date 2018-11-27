@@ -1,0 +1,10 @@
+XlsxToLua/.vs/
+XlsxToLua/obj/
+
+XlsxToLua/bin/Debug/ExportJson/
+XlsxToLua/bin/Debug/ExportLua/
+XlsxToLua/bin/Debug/ExportJavaClass/
+XlsxToLua/bin/Debug/ExportCsv/
+XlsxToLua/bin/Debug/ExportCsClass/
+
+XlsxToLua/bin/Debug/XlsxToLua.pdb
