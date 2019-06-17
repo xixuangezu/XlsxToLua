@@ -1,0 +1,13 @@
+programPath:D:\ci\works\git\XlsxToLua\release\XlsxToLua.exe
+excelFolderPath:D:\ci\works\git\XlsxToLua\release\Excel
+exportLuaFolderPath:D:\ci\works\git\XlsxToLua\release\ExportLua
+clientFolderPath:-noClient
+langFilePath:-noLang
+-exportCsvParam_extension:csv
+-exportCsvParam_splitString:,
+-exportJsonParam_extension:txt
+-exportCsvParam_isExportColumnName:true
+-exportCsvParam_isExportColumnDataType:true
+-exportJsonParam_isExportJsonArrayFormat:true
+-exportJsonParam_isMapIncludeKeyColumnValue:true
+-exportJavaClassParam_isUseDate:true

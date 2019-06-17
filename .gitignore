@@ -10,3 +10,6 @@ XlsxToLua/bin/Debug/ExportCsv/
 XlsxToLua/bin/Debug/ExportCsClass/
 
 XlsxToLua/bin/Debug/XlsxToLua.pdb
+
+release/Excel
+release/ExportLua
