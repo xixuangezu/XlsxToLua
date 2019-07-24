@@ -1,0 +1,1 @@
+"D:\ci\works\git\XlsxToLua\release\XlsxToLua.exe" "D:\ci\works\git\XlsxToLua\release\Excel" "D:\ci\works\git\XlsxToLua\release\ExportLua" "-noClient" "-noLang" 

@@ -182,6 +182,7 @@ public enum DataType
     Dict,
     MapString,
     Arr,
+    Arr2,
 }
 
 /// <summary>
@@ -201,6 +202,7 @@ public enum TableStringValueType
     True,            // 值始终为true
     DataInIndex,     // 以数据组中指定索引位置的数据为value
     Table,           // value是含有复杂数据的table
+    Array,           // 数组
 }
 
 /// <summary>

@@ -526,6 +526,7 @@ public class TableExportToLuaHelper
                     break;
                 }
             case DataType.Arr:
+            case DataType.Arr2:
             case DataType.TableString:
                 {
                     value = _GetTableStringValue(fieldInfo, row, level, out errorString);
@@ -957,6 +958,35 @@ public class TableExportToLuaHelper
                             if (errorString == null)
                             {
                                 if (elementDefine.DataInIndexDefine.DataType == DataType.String || elementDefine.DataInIndexDefine.DataType == DataType.Lang)
+                                    content.AppendFormat("\"{0}\"", value);
+                                else
+                                    content.Append(value);
+                            }
+                            content.AppendLine(",");
+                        }
+                        --level;
+                        content.Append(_GetLuaTableIndentation(level));
+                        content.Append("}");
+
+                        break;
+                    }
+                case TableStringValueType.Array:
+                    {
+                        content.AppendLine("{");
+                        ++level;
+
+                        // 依次输出table中定义的子元素
+                        string[] oneAllDataString = allDataString[i].Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+                        for (int n = 0; n < oneAllDataString.Length; ++n)
+                        {
+                            content.Append(_GetLuaTableIndentation(level));
+                            content.AppendFormat("[{0}]", n + 1);
+                            content.Append(" = ");
+                            string value = _GetDataInIndexType(fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine, oneAllDataString[n], out errorString);
+                            if (errorString == null)
+                            {
+                                DataType dataType = fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine.DataType;
+                                if (dataType == DataType.String || dataType == DataType.Lang)
                                     content.AppendFormat("\"{0}\"", value);
                                 else
                                     content.Append(value);

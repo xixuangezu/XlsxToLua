@@ -188,6 +188,7 @@ public class TableExportToJsonHelper
                     break;
                 }
             case DataType.Arr:
+            case DataType.Arr2:
             case DataType.TableString:
                 {
                     value = _GetTableStringValue(fieldInfo, row, out errorString);
@@ -544,6 +545,32 @@ public class TableExportToJsonHelper
                         // 去掉最后一个子元素后多余的英文逗号
                         content.Remove(content.Length - 1, 1);
                         content.Append("}");
+
+                        break;
+                    }
+                case TableStringValueType.Array:
+                    {
+                        content.Append("[");
+
+                        // 依次输出table中定义的子元素
+                        string[] oneAllDataString = allDataString[i].Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+                        for (int n = 0; n < oneAllDataString.Length; ++n)
+                        {
+                            string value = _GetDataInIndexType(fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine, oneAllDataString[n], out errorString);
+                            if (errorString == null)
+                            {
+                                DataType dataType = fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine.DataType;
+                                if (dataType == DataType.String || dataType == DataType.Lang)
+                                    content.AppendFormat("\"{0}\"", value);
+                                else
+                                    content.Append(value);
+                            }
+                            content.Append(",");
+                        }
+
+                        // 去掉最后一个子元素后多余的英文逗号
+                        content.Remove(content.Length - 1, 1);
+                        content.Append("]");
 
                         break;
                     }

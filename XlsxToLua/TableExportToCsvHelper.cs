@@ -96,6 +96,7 @@ public class TableExportToCsvHelper
             case DataType.String:
             case DataType.Lang:
             case DataType.Arr:
+            case DataType.Arr2:
             case DataType.TableString:
                 {
                     for (int row = 0; row < rowCount; ++row)

@@ -154,6 +154,7 @@ public class TableExportToCsClassHelper
                     break;
                 }
             case DataType.Arr:
+            case DataType.Arr2:
             case DataType.TableString:
                 {
                     if (fieldInfo.TableStringFormatDefine.KeyDefine.KeyType == TableStringKeyType.Seq)
@@ -169,6 +170,14 @@ public class TableExportToCsClassHelper
                             case TableStringValueType.Table:
                                 {
                                     stringBuilder.Append("Dictionary<string, object>");
+                                    break;
+                                }
+                            case TableStringValueType.Array:
+                                {
+                                    stringBuilder.Append("List<");
+                                    string valueDataTypeString = _GetCsClassTableStringDataType(fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine.DataType);
+                                    stringBuilder.Append(valueDataTypeString);
+                                    stringBuilder.Append(">");
                                     break;
                                 }
                             case TableStringValueType.DataInIndex:
@@ -212,6 +221,14 @@ public class TableExportToCsClassHelper
                             case TableStringValueType.Table:
                                 {
                                     stringBuilder.Append("Dictionary<string, object>");
+                                    break;
+                                }
+                            case TableStringValueType.Array:
+                                {
+                                    stringBuilder.Append("List<");
+                                    string valueDataTypeString = _GetCsClassTableStringDataType(fieldInfo.TableStringFormatDefine.ValueDefine.DataInIndexDefine.DataType);
+                                    stringBuilder.Append(valueDataTypeString);
+                                    stringBuilder.Append(">");
                                     break;
                                 }
                             case TableStringValueType.DataInIndex:
