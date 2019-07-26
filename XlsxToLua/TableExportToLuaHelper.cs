@@ -527,6 +527,7 @@ public class TableExportToLuaHelper
                 }
             case DataType.Arr:
             case DataType.Arr2:
+            case DataType.ArrTab:
             case DataType.TableString:
                 {
                     value = _GetTableStringValue(fieldInfo, row, level, out errorString);

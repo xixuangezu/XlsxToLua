@@ -160,6 +160,7 @@ public class TableExportToCsClassHelper
                 }
             case DataType.Arr:
             case DataType.Arr2:
+            case DataType.ArrTab:
             case DataType.TableString:
                 {
                     if (fieldInfo.TableStringFormatDefine.KeyDefine.KeyType == TableStringKeyType.Seq)

@@ -189,6 +189,7 @@ public class TableExportToJsonHelper
                 }
             case DataType.Arr:
             case DataType.Arr2:
+            case DataType.ArrTab:
             case DataType.TableString:
                 {
                     value = _GetTableStringValue(fieldInfo, row, out errorString);

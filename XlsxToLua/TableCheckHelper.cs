@@ -414,7 +414,7 @@ public class TableCheckHelper
                     emptyDataLines.Add(i);
             }
         }
-        else if (fieldInfo.DataType == DataType.Json || fieldInfo.DataType == DataType.TableString || fieldInfo.DataType == DataType.MapString || fieldInfo.DataType == DataType.Arr || fieldInfo.DataType == DataType.Arr2 || fieldInfo.DataType == DataType.Tab)
+        else if (fieldInfo.DataType == DataType.Json || fieldInfo.DataType == DataType.TableString || fieldInfo.DataType == DataType.MapString || fieldInfo.DataType == DataType.Arr || fieldInfo.DataType == DataType.Arr2 || fieldInfo.DataType == DataType.ArrTab || fieldInfo.DataType == DataType.Tab)
         {
             for (int i = 0; i < fieldInfo.Data.Count; ++i)
             {

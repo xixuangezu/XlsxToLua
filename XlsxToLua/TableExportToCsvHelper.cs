@@ -97,6 +97,7 @@ public class TableExportToCsvHelper
             case DataType.Lang:
             case DataType.Arr:
             case DataType.Arr2:
+            case DataType.ArrTab:
             case DataType.Tab:
             case DataType.TableString:
                 {

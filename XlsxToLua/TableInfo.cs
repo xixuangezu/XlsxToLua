@@ -185,6 +185,7 @@ public enum DataType
     MapString,
     Arr,
     Arr2,
+    ArrTab,
     Tab,
 }
 
