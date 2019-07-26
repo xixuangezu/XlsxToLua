@@ -153,6 +153,11 @@ public class TableExportToCsClassHelper
                     stringBuilder.Append("DateTime");
                     break;
                 }
+            case DataType.Tab:
+                {
+                    stringBuilder.Append("Dictionary<string, object>");
+                    break;
+                }
             case DataType.Arr:
             case DataType.Arr2:
             case DataType.TableString:

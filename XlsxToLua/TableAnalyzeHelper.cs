@@ -419,6 +419,11 @@ public class TableAnalyzeHelper
                     _AnalyzeArr2Type(fieldInfo, tableInfo, dt, columnIndex, parentField, out nextFieldColumnIndex, out errorString);
                     break;
                 }
+            case DataType.Tab:
+                {
+                    _AnalyzeTabType(fieldInfo, tableInfo, dt, columnIndex, parentField, out nextFieldColumnIndex, out errorString);
+                    break;
+                }
             default:
                 {
                     errorString = string.Format("数据类型无效，填写的为{0}", fieldInfo.DataTypeString);
@@ -473,6 +478,8 @@ public class TableAnalyzeHelper
             return DataType.Arr2;
         else if(typeString.StartsWith("arr", StringComparison.CurrentCultureIgnoreCase))
             return DataType.Arr;
+        else if(typeString.StartsWith("tab", StringComparison.CurrentCultureIgnoreCase))
+            return DataType.Tab;
         else
             return DataType.Invalid;
     }
@@ -1485,7 +1492,7 @@ public class TableAnalyzeHelper
         fieldInfo.TableStringFormatDefine = _GetArrFormatDefine(fieldInfo.DataTypeString, out errorString);
         if (errorString != null)
         {
-            errorString = string.Format("tableString格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
+            errorString = string.Format("arr格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
             nextFieldColumnIndex = columnIndex + 1;
             return false;
         }
@@ -1517,7 +1524,7 @@ public class TableAnalyzeHelper
         fieldInfo.TableStringFormatDefine = _GetArr2FormatDefine(fieldInfo.DataTypeString, out errorString);
         if (errorString != null)
         {
-            errorString = string.Format("tableString格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
+            errorString = string.Format("arr2格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
             nextFieldColumnIndex = columnIndex + 1;
             return false;
         }
@@ -1543,6 +1550,37 @@ public class TableAnalyzeHelper
         return true;
     }
 
+    private static bool _AnalyzeTabType(FieldInfo fieldInfo, TableInfo tableInfo, DataTable dt, int columnIndex, FieldInfo parentField, out int nextFieldColumnIndex, out string errorString)
+    {
+        // 检查定义字符串是否合法并转为TableStringFormatDefine的定义结构
+        fieldInfo.TabFormatDefine = _GetTabFormatDefine(fieldInfo.DataTypeString, out errorString);
+        if (errorString != null)
+        {
+            errorString = string.Format("tab格式定义错误，{0}，你输入的类型定义字符串为{1}", errorString, fieldInfo.DataTypeString);
+            nextFieldColumnIndex = columnIndex + 1;
+            return false;
+        }
+        // 将填写的数据直接以字符串形式存在FieldInfo的Data变量中
+        fieldInfo.Data = new List<object>();
+        for (int row = AppValues.DATA_FIELD_DATA_START_INDEX; row < dt.Rows.Count; ++row)
+        {
+            // 如果本行该字段的父元素标记为无效则该数据也标为无效
+            if (parentField != null && (bool)parentField.Data[row - AppValues.DATA_FIELD_DATA_START_INDEX] == false)
+                fieldInfo.Data.Add(null);
+            else
+            {
+                string inputData = dt.Rows[row][columnIndex].ToString().Trim();
+                if (string.IsNullOrEmpty(inputData))
+                    fieldInfo.Data.Add(null);
+                else
+                    fieldInfo.Data.Add(inputData);
+            }
+        }
+
+        errorString = null;
+        nextFieldColumnIndex = columnIndex + 1;
+        return true;
+    }
     private static TableStringFormatDefine _GetTableStringFormatDefine(string dataTypeString, out string errorString)
     {
         TableStringFormatDefine formatDefine = new TableStringFormatDefine();
@@ -1778,7 +1816,7 @@ public class TableAnalyzeHelper
         const string DEFINE_START_STRING = "arr2[";
         if (!(dataTypeString.StartsWith(DEFINE_START_STRING, StringComparison.CurrentCultureIgnoreCase) && dataTypeString.EndsWith("]")))
         {
-            errorString = "arr[]中声明，即以\"arr[\"开头，以\"]\"结尾";
+            errorString = "arr2[]中声明，即以\"arr2[\"开头，以\"]\"结尾";
             return formatDefine;
         }
 
@@ -1808,6 +1846,167 @@ public class TableAnalyzeHelper
 
         errorString = null;
         return formatDefine;
+    }
+
+    private static TabFormatDefine _GetTabFormatDefine(string dataTypeString, out string errorString)
+    {
+        TabFormatDefine formatDefine = new TabFormatDefine();
+
+        // 必须在tableString[]中声明格式
+        const string DEFINE_START_STRING = "tab{";
+        if (!(dataTypeString.StartsWith(DEFINE_START_STRING, StringComparison.CurrentCultureIgnoreCase) && dataTypeString.EndsWith("}")))
+        {
+            errorString = "必须在tab{}中声明，即以\"tab{\"开头，以\"}\"结尾";
+            return formatDefine;
+        }
+        // 去掉外面的tableString[]，取得中间定义内容
+        int startIndex = DEFINE_START_STRING.Length;
+        string formatString = dataTypeString.Substring(startIndex, dataTypeString.Length - startIndex - 1).Trim();
+        // 通过,分离keys
+        string[] keyAndValueFormatString = formatString.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+        keyAndValueFormatString = _tabCutBracketSave(keyAndValueFormatString, ',', "{", "}");
+
+        // 解析每个键值对的定义
+        formatDefine.KeyDefine = new List<TableStringKeyDefine>();
+        formatDefine.ValueDefine = new List<TableStringValueDefine>();
+        // 记录每个键值对的key，不允许重复（key：key名， value：第几组键值对，从0开始记）
+        Dictionary<string, int> tableKeys = new Dictionary<string, int>();
+        for (int i = 0; i < keyAndValueFormatString.Length; ++i)
+        {
+            TableStringKeyDefine oneKey = new TableStringKeyDefine();
+            TableStringValueDefine oneValue = new TableStringValueDefine();
+            oneKey.KeyType = TableStringKeyType.Name;
+
+            string[] oneKeyAndValue = keyAndValueFormatString[i].Split(new char[] { '=' }, System.StringSplitOptions.RemoveEmptyEntries);
+            oneKeyAndValue = _tabCutBracketSave(oneKeyAndValue, '=', "{", "}");
+
+            if (oneKeyAndValue.Length != 2)
+            {
+                errorString = "必须用=分隔键值对";
+                return formatDefine;
+            }
+            else
+            {
+                // 取得并检查key名
+                string keyName = oneKeyAndValue[0].Trim();
+                TableCheckHelper.CheckFieldName(keyName, out errorString);
+                if (errorString != null)
+                {
+                    errorString = "键值对中键名非法，" + errorString;
+                    return formatDefine;
+                }
+                // 检查定义的key是否重复
+                if (tableKeys.ContainsKey(keyName))
+                {
+                    errorString = string.Format("table类型的第{0}个与第{1}个子元素均为相同的key（{2}）", tableKeys[keyName] + 1, i + 1, keyName);
+                    return formatDefine;
+                }
+                else
+                {
+                    tableKeys.Add(keyName, i + 1);
+                }
+                oneKey.KeyName = keyName;
+
+                // 解析value
+                string value = oneKeyAndValue[1].Trim();
+                if(value.StartsWith("{") && dataTypeString.EndsWith("}")){
+                    // 子table
+                    value = value.Substring(1, value.Length-2);
+                    oneValue.ValueType = TableStringValueType.Table;
+                    // 通过,分离keys
+                    string[] childrenKeyAndValueFormatString = value.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+                    // 解析每个键值对的定义
+                    oneValue.TableValueDefineList = new List<TableElementDefine>();
+                    // 记录每个键值对的key，不允许重复（key：key名， value：第几组键值对，从0开始记）
+                    Dictionary<string, int> childrenTableKeys = new Dictionary<string, int>();
+                    for (int n = 0; n < childrenKeyAndValueFormatString.Length; ++n)
+                    {
+                        TableElementDefine oneCell = new TableElementDefine();
+
+                        string[] oneChildKeyAndValue = childrenKeyAndValueFormatString[n].Split(new char[] { '=' }, System.StringSplitOptions.RemoveEmptyEntries);
+
+                        if (oneChildKeyAndValue.Length != 2)
+                        {
+                            errorString = "子table必须用=分隔键值对";
+                            return formatDefine;
+                        }
+                        else
+                        {
+                            // 取得并检查key名
+                            string childKeyName = oneChildKeyAndValue[0].Trim();
+                            TableCheckHelper.CheckFieldName(childKeyName, out errorString);
+                            if (errorString != null)
+                            {
+                                errorString = "键值对中键名非法，" + errorString;
+                                return formatDefine;
+                            }
+                            // 检查定义的key是否重复
+                            if (childrenTableKeys.ContainsKey(childKeyName))
+                            {
+                                errorString = string.Format("table类型的第{0}个与第{1}个子元素均为相同的key（{2}）", childrenTableKeys[childKeyName] + 1, i + 1, childKeyName);
+                                return formatDefine;
+                            }
+                            else
+                            {
+                                childrenTableKeys.Add(childKeyName, i + 1);
+                            }
+                            oneCell.KeyName = childKeyName;
+
+                            // 解析value
+                            string childValue = oneChildKeyAndValue[1].Trim();
+                            oneCell.DataInIndexDefine.DataType = _AnalyzeDataType(childValue);
+                            oneCell.DataInIndexDefine.DataIndex = n + 1;
+                            if (!(oneCell.DataInIndexDefine.DataType == DataType.Int || oneCell.DataInIndexDefine.DataType == DataType.Long || oneCell.DataInIndexDefine.DataType == DataType.Float || oneCell.DataInIndexDefine.DataType == DataType.Bool || oneCell.DataInIndexDefine.DataType == DataType.String || oneCell.DataInIndexDefine.DataType == DataType.Lang))
+                            {
+                                errorString = "子table格式类型非法，只支持int、long、float、bool、string、lang这几种类型";
+                                return formatDefine;
+                            }
+                        }
+                        oneValue.TableValueDefineList.Add(oneCell);
+                    }
+                }else{
+                    oneValue.ValueType = TableStringValueType.DataInIndex;
+                    oneValue.DataInIndexDefine.DataType = _AnalyzeDataType(value);
+                    oneValue.DataInIndexDefine.DataIndex = 1;
+                    if (!(oneValue.DataInIndexDefine.DataType == DataType.Int || oneValue.DataInIndexDefine.DataType == DataType.Long || oneValue.DataInIndexDefine.DataType == DataType.Float || oneValue.DataInIndexDefine.DataType == DataType.Bool || oneValue.DataInIndexDefine.DataType == DataType.String || oneValue.DataInIndexDefine.DataType == DataType.Lang))
+                    {
+                        errorString = "格式类型非法，只支持int、long、float、bool、string、lang这几种类型";
+                        return formatDefine;
+                    }
+                }
+            }
+            formatDefine.KeyDefine.Add(oneKey);
+            formatDefine.ValueDefine.Add(oneValue);
+        }
+
+        errorString = null;
+        return formatDefine;
+    }
+
+    private static string[] _tabCutBracketSave(string[] oldStrings, char cutString, string saveStart, string saveEnd)
+    {
+        // Split()分割后 对不需要的分割恢复
+        // @ cutString              Split()时的分隔符
+        // @ saveStart  saveEnd     两者间的字符不需要分割 如: {} 等
+        List<string> strList = new List<string>();
+        bool isInBracket = false;
+        string newString = "";
+        for (int i = 0; i < oldStrings.Length; ++i){
+            if(oldStrings[i].IndexOf(saveStart) != -1){
+                isInBracket = true;
+            }
+            if(oldStrings[i].IndexOf(saveEnd)!= -1){
+                isInBracket = false;
+            }
+            newString += oldStrings[i];
+            if(!isInBracket){
+                strList.Add(newString);
+                newString = "";
+            }else{
+                newString += cutString;
+            }
+        }
+        return strList.ToArray();
     }
 
     /// <summary>

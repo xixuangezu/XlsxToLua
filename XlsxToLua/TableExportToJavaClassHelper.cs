@@ -245,6 +245,11 @@ public class TableExportToJavaClassHelper
 
                     break;
                 }
+            case DataType.Tab:
+                {
+                    stringBuilder.Append("HashMap<String, Object>");
+                    break;
+                }
             case DataType.Arr:
             case DataType.Arr2:
             case DataType.TableString:

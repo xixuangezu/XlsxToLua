@@ -114,6 +114,8 @@ public class FieldInfo
     public Dictionary<string, object> ExtraParam { get; set; }
     // 如果该字段为tableString型，存储解析之后的格式定义
     public TableStringFormatDefine TableStringFormatDefine { get; set; }
+    // 如果该字段为tab型，存储解析之后的格式定义
+    public TabFormatDefine TabFormatDefine { get; set; }
     // 如果该字段为mapString型，存储解析之后的格式定义
     public MapStringInfo MapStringFormatDefine { get; set; }
     // 如果该字段是array或dict类型，其下属的字段信息存放在该变量中
@@ -183,6 +185,7 @@ public enum DataType
     MapString,
     Arr,
     Arr2,
+    Tab,
 }
 
 /// <summary>
@@ -192,6 +195,7 @@ public enum TableStringKeyType
 {
     Seq,             // 按数据顺序自动编号
     DataInIndex,     // 以数据组中指定索引位置的数据为key
+    Name,            // 固定keyName
 }
 
 /// <summary>
@@ -234,6 +238,8 @@ public struct TableStringKeyDefine
     public TableStringKeyType KeyType;
     // 如果key为DATA_IN_INDEX类型，存储其定义
     public DataInIndexDefine DataInIndexDefine;
+    // tab{}解析key名
+    public string KeyName;
 }
 
 /// <summary>
@@ -256,6 +262,15 @@ public struct TableStringFormatDefine
 {
     public TableStringKeyDefine KeyDefine;
     public TableStringValueDefine ValueDefine;
+}
+
+/// <summary>
+/// 将tab定义的字符串转为的格式定义
+/// </summary>
+public struct TabFormatDefine
+{
+    public List<TableStringKeyDefine> KeyDefine;
+    public List<TableStringValueDefine> ValueDefine;
 }
 
 /// <summary>

@@ -194,6 +194,11 @@ public class TableExportToJsonHelper
                     value = _GetTableStringValue(fieldInfo, row, out errorString);
                     break;
                 }
+            case DataType.Tab:
+                {
+                    value = _GetTabValue(fieldInfo, row, out errorString);
+                    break;
+                }
             case DataType.MapString:
                 {
                     value = _GetMapStringValue(fieldInfo, row);
@@ -593,6 +598,108 @@ public class TableExportToJsonHelper
         // 去掉最后一组后多余的英文逗号
         content.Remove(content.Length - 1, 1);
         if (fieldInfo.TableStringFormatDefine.KeyDefine.KeyType == TableStringKeyType.Seq)
+            content.Append("]");
+        else
+            content.Append("}");
+
+        return content.ToString();
+    }
+
+    private static string _GetTabValue(FieldInfo fieldInfo, int row, out string errorString)
+    {
+        errorString = null;
+        if (fieldInfo.Data[row] == null)
+            return "null";
+
+        StringBuilder content = new StringBuilder();
+        string inputData = fieldInfo.Data[row].ToString();
+
+        // tableString字符串中不允许出现英文引号、斜杠
+        if (inputData.Contains("\"") || inputData.Contains("\\") || inputData.Contains("/"))
+        {
+            errorString = "tableString字符串中不允许出现英文引号、斜杠";
+            return null;
+        }
+
+        // 若tableString的key为#seq，则生成json array，否则生成json object
+        if (fieldInfo.TabFormatDefine.KeyDefine[0].KeyType == TableStringKeyType.Seq)
+            content.Append("[");
+        else
+            content.Append("{");
+
+        // 每组数据间用英文分号分隔
+        string[] allDataString = inputData.Split(new char[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
+        // 记录每组数据中的key值（转为字符串后的），不允许出现相同的key（key：每组数据中的key值， value：第几组数据，从0开始记）
+        Dictionary<string, int> stringKeys = new Dictionary<string, int>();
+        for (int i = 0; i < allDataString.Length; ++i)
+        {
+            //key
+            content.AppendFormat("\"{0}\"", fieldInfo.TabFormatDefine.KeyDefine[i].KeyName);
+
+            content.Append(":");
+
+            // 根据value的格式定义生成value
+            switch (fieldInfo.TabFormatDefine.ValueDefine[i].ValueType)
+            {
+                case TableStringValueType.DataInIndex:
+                    {
+                        string value = _GetDataInIndexType(fieldInfo.TabFormatDefine.ValueDefine[i].DataInIndexDefine, allDataString[i], out errorString);
+                        if (errorString == null)
+                        {
+                            DataType dataType = fieldInfo.TabFormatDefine.ValueDefine[i].DataInIndexDefine.DataType;
+                            if (dataType == DataType.String || dataType == DataType.Lang)
+                                content.AppendFormat("\"{0}\"", value);
+                            else
+                                content.Append(value);
+                        }
+
+                        break;
+                    }
+                case TableStringValueType.Table:
+                    {
+                        content.Append("{");
+
+                        // 依次输出table中定义的子元素
+                        foreach (TableElementDefine elementDefine in fieldInfo.TabFormatDefine.ValueDefine[i].TableValueDefineList)
+                        {
+                            content.AppendFormat("\"{0}\"", elementDefine.KeyName);
+                            content.Append(":");
+                            string value = _GetDataInIndexType(elementDefine.DataInIndexDefine, allDataString[i], out errorString);
+                            if (errorString == null)
+                            {
+                                if (elementDefine.DataInIndexDefine.DataType == DataType.String || elementDefine.DataInIndexDefine.DataType == DataType.Lang)
+                                    content.AppendFormat("\"{0}\"", value);
+                                else
+                                    content.Append(value);
+                            }
+                            content.Append(",");
+                        }
+
+                        // 去掉最后一个子元素后多余的英文逗号
+                        content.Remove(content.Length - 1, 1);
+                        content.Append("}");
+
+                        break;
+                    }
+                default:
+                    {
+                        Utils.LogErrorAndExit("错误：用_GetTableStringValue函数导出未知类型的value");
+                        return null;
+                    }
+            }
+            if (errorString != null)
+            {
+                errorString = string.Format("tableString中第{0}组数据（{1}）的value数据存在错误，", i + 1, allDataString[i]) + errorString;
+                return null;
+            }
+
+            // 每组数据生成完毕后加逗号
+            content.Append(",");
+        }
+
+        // 去掉最后一组后多余的英文逗号
+        content.Remove(content.Length - 1, 1);
+        if (fieldInfo.TabFormatDefine.KeyDefine[0].KeyType == TableStringKeyType.Seq)
             content.Append("]");
         else
             content.Append("}");
